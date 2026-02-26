@@ -85,6 +85,8 @@ claude-project projects delete <uuid> [--confirm]
 
 ```bash
 claude-project docs list <project-uuid>
+claude-project docs get <project-uuid> <doc-uuid>
+claude-project docs get <project-uuid> <doc-uuid> --content  # raw content to stdout
 claude-project docs add <project-uuid> --file ./document.md
 claude-project docs add <project-uuid> --name "notes.txt" --content "inline text"
 cat file.md | claude-project docs add <project-uuid> --name "piped.md"
