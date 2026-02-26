@@ -82,6 +82,12 @@ class ClaudeAPIClient:
             raise AuthError("Session expired or invalid. Run: claude-project auth login")
         if resp.status_code == 404:
             raise NotFoundError(f"Resource not found: {resp.url}")
+        if resp.status_code == 413:
+            raise APIError(
+                "Prompt is too long — project knowledge docs likely exceed the model's context window.\n"
+                "  Run `claude-project docs list <project-id>` to check total token usage.\n"
+                "  Consider splitting large docs into smaller ones, or using a project with fewer docs."
+            )
         if resp.status_code == 429:
             retry_after = resp.headers.get("retry-after", "")
             msg = "Rate limited."
@@ -210,6 +216,13 @@ class ClaudeAPIClient:
         resp = await self._client.get(self._org_url(f"projects/{project_id}/docs"))
         await self._raise_for_status(resp)
         return [Document.from_api(d) for d in resp.json()]
+
+    async def get_doc(self, project_id: str, doc_id: str) -> Document:
+        resp = await self._client.get(
+            self._org_url(f"projects/{project_id}/docs/{doc_id}")
+        )
+        await self._raise_for_status(resp)
+        return Document.from_api(resp.json())
 
     async def create_doc(
         self, project_id: str, file_name: str, content: str

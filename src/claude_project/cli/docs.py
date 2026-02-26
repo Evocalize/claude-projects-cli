@@ -35,6 +35,33 @@ def list_docs(
         columns=["file_name", "uuid", "token_count", "created_at"],
         title="Knowledge Docs",
     )
+    if not json_mode and docs:
+        total_tokens = sum(d.token_count or 0 for d in docs)
+        total_chars = sum(len(d.content) for d in docs)
+        console.print(
+            f"\n[dim]{len(docs)} docs, {total_tokens:,} tokens, {total_chars:,} chars total[/dim]"
+        )
+
+
+@app.command("get")
+@handle_errors
+def get_doc(
+    project_id: str = typer.Argument(help="Project UUID"),
+    doc_id: str = typer.Argument(help="Document UUID"),
+    json_mode: bool = typer.Option(False, "--json", "-j", help="JSON output"),
+    content_only: bool = typer.Option(False, "--content", "-c", help="Print content only to stdout"),
+):
+    """Get a single knowledge doc by ID."""
+
+    async def _run():
+        async with ClaudeAPIClient() as client:
+            return await client.get_doc(project_id, doc_id)
+
+    doc = asyncio.run(_run())
+    if content_only:
+        print(doc.content)
+    else:
+        render(doc, json_mode=json_mode, title="Document")
 
 
 @app.command("add")
